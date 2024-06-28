@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import openai
+from openai import OpenAI
 from kendra import Kendra
 
 # Discordのボットの設定
@@ -9,15 +9,37 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Kendraクラスのインスタンスを作成
-kendra = Kendra('/mnt/data/rag-faq-db-6.csv')
+kendra = Kendra(
+    '/Users/tamurashuto/daigaku/4/spring/rinkou/kkrag/rag-faq-db-6.csv')
 
 # OpenAI APIキーを設定
-openai.api_key = 'your-openai-api-key'
+# openai.api_key = 'openai-api-key'
+client = OpenAI(
+    api_key='openai-api-key',)
 
 
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
+    # for guild in bot.guilds:
+    #    print(f'Guild: {guild.name} (ID: {guild.id})')
+    #    for channel in guild.channels:
+    #        print(f' - {channel.name} (ID: {channel.id})')
+    channel = bot.get_channel(1256130302171025481)
+    await channel.send("わたしがきた")
+
+
+@bot.event
+async def on_massage(message: discord.Message):
+    if message.author.bot:
+        return
+    if message.content == 'hello':
+        await message.reply("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
+
+
+@bot.command()
+async def hoge(ctx, arg):
+    await ctx.send(arg)
 
 
 @bot.command()
@@ -26,27 +48,34 @@ async def ask(ctx, *, question):
     answer, url = kendra.find_best_match(question)
 
     # OpenAIを使って回答を改善（必要に応じて）
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"""
-        以下の質問に対して適切な回答を提供してください。もし回答がドキュメントやソースに存在しない場合は、その旨を伝えてください。
-
-        質問: {question}
-
-        事前回答: {answer}
-
-        参考URL: {url}
-
-        改善された回答:
-        """,
+    # response = openai.ChatCompletion.create(
+    #     model="gpt-3.5-turbo",
+    #     messages=[
+    #         {"role": "system", "content": "あなたは質問に対する回答を提供するAIです。もし回答がドキュメントやソースに存在しない場合は、その旨を伝えてください。"},
+    #         {"role": "user", "content": f"質問: {question}\n\n事前回答: {answer}\n\n参考URL: {url}\n\n改善された回答:"}
+    #     ],
+    #     max_tokens=150
+    # )
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたは質問に対する回答を提供するAIです。もし回答がドキュメントやソースに存在しない場合は、その旨を伝えてください。",
+            },
+            {
+                "role": "user",
+                "content": f"質問: {question}\n\n事前回答: {answer}\n\n参考URL: {url}\n\n改善された回答:",
+            }
+        ],
+        model="gpt-3.5-turbo",
         max_tokens=150
     )
 
     # 改善された回答を取得
-    improved_answer = response['choices'][0]['text'].strip()
+    improved_answer = chat_completion['choices'][0]['text'].strip()
 
     # ユーザーに回答を送信
     await ctx.send(f"質問: {question}\n\n回答: {improved_answer}\n\n参考URL: {url}")
 
 # Discordボットのトークンを設定
-bot.run('your-discord-bot-token')
+bot.run('discord-bot-token')
