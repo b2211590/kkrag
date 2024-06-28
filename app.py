@@ -9,8 +9,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Kendraクラスのインスタンスを作成
-kendra = Kendra(
-    '/Users/tamurashuto/daigaku/4/spring/rinkou/kkrag/rag-faq-db-6.csv')
+kendra = Kendra('rag-faq-db-6.csv')
 
 # OpenAI APIキーを設定
 # openai.api_key = 'openai-api-key'
