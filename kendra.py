@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+
 class Kendra:
     def __init__(self, faq_path):
         self.faq_data = pd.read_csv(faq_path)
