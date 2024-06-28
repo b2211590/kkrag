@@ -28,7 +28,17 @@ async def ask(ctx, *, question):
     # OpenAIを使って回答を改善（必要に応じて）
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"質問: {question}\n\n回答: {answer}\n\n参考URL: {url}",
+        prompt=f"""
+        以下の質問に対して適切な回答を提供してください。もし回答がドキュメントやソースに存在しない場合は、その旨を伝えてください。
+
+        質問: {question}
+
+        事前回答: {answer}
+
+        参考URL: {url}
+
+        改善された回答:
+        """,
         max_tokens=150
     )
 
