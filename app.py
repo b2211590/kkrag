@@ -39,9 +39,44 @@ async def on_ready():
 
 @bot.command()
 async def ask(ctx, *, question):
+    reply_msg = ""
+
     # Kendraを使って最も類似した質問の回答と参考URLを取得
-    answer, url = kendra.find_best_match(question)
-    print(f'\n事前回答: {answer}')
+    results = kendra.find_best_match(question)
+    print(f'\n事前回答: {results}')
+
+    first_answer, second_answer, third_answer = results[:3]
+
+    similarity_is_greater = compare_similarity_with_threshold(first_answer)
+
+    if similarity_is_greater is False:
+        reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
+
+    else:
+        # 改善された回答を取得
+        GPTs_answer = throw_QandA_to_GPT(question, results)
+        contents = GPTs_answer.choices[0].message.content
+        reply_msg = f"質問: {question}\n\n回答: {contents}\n\n参考URL: {url}"
+
+    # ユーザーに回答を送信
+    await ctx.send(reply_msg)
+
+
+# Discordボットのトークンを設定
+bot.run(discord_bot_token)
+
+
+def compare_similarity_with_threshold(first_answer: list, threshold=0.85):
+    # 最も高い類似度を比較する
+    first_sim = first_answer[2]
+
+    if first_sim > threshold:
+        return True
+
+    return False
+
+
+def throw_QandA_to_GPT(question: str, results: list):
 
     # OpenAIを使って回答を改善
     chat_completion = client.chat.completions.create(
@@ -52,7 +87,7 @@ async def ask(ctx, *, question):
             },
             {
                 "role": "user",
-                "content": f"質問: {question}\n\n事前回答: {answer}\n\n参考URL: {url}\n\n改善された回答:",
+                "content": f"質問: {question}\n\n事前回答: {answer}\n\n参考URL: {url}\n\n事前回答の正確性: {similarity}\n\n改善された回答:",
             }
         ],
         model="gpt-3.5-turbo",
@@ -62,10 +97,4 @@ async def ask(ctx, *, question):
     print(f'ChatGPTレスポンス: {chat_completion}')
 
     # 改善された回答を取得
-    improved_answer = chat_completion.choices[0].message.content
-
-    # ユーザーに回答を送信
-    await ctx.send(f"質問: {question}\n\n回答: {improved_answer}\n\n参考URL: {url}")
-
-# Discordボットのトークンを設定
-bot.run(discord_bot_token)
+    return chat_completion
