@@ -26,20 +26,15 @@ client = OpenAI(api_key=openai_api_key)
 async def on_ready():
     print(f'We have logged in as {bot.user}')
     channel = bot.get_channel(channnel_id)
-    await channel.send("わたしがきた")
+    await channel.send("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
 
 
-@bot.event
-async def on_massage(message: discord.Message):
-    if message.author.bot:
-        return
-    if message.content == 'hello':
-        await message.reply("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
-
-
-@bot.command()
-async def hoge(ctx, arg):
-    await ctx.send(arg)
+# @bot.event
+# async def on_massage(message: discord.Message):
+#     if message.author.bot:
+#         return
+#     if message.content == 'hello':
+#         await message.reply("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
 
 
 @bot.command()
