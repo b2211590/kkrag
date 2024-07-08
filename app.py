@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 datasource_path = os.getenv("DATASOURCE_PATH")
 discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
-discord_channel_id = os.getenv("DISCORD_CHANNEL_ID")
+discord_channel_id = int(os.getenv("DISCORD_CHANNEL_ID"))
 
 # Discordのボットの設定
 intents = discord.Intents.default()
@@ -34,7 +34,7 @@ async def ask(ctx, *, question):
     reply_msg = "これは表示されません"
 
     # Kendraを使って最も類似した質問の回答と参考URLを取得
-    results = kendra.find_best_match(question)
+    results = kendra.find_best_matches(question)
     print(f'\n事前回答: {results}')
 
     similarity_is_greater = compare_similarity_with_threshold(results)
