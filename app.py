@@ -2,13 +2,15 @@ import discord
 from discord.ext import commands
 from openai import OpenAI
 from kendra import Kendra
+import os
+from dotenv import load_dotenv
 
-# 必要に応じて書き換える
-datasource_path = 'rag-faq-db-6.csv'
-openai_api_key = 'openai-api-key'
-discord_bot_token = 'discord-bot-token'
-channnel_id = 1256130302171025481
-
+# 各シークレットを環境変数から読み込む
+load_dotenv()
+datasource_path = os.getenv("DATASOURCE_PATH")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
+discord_channel_id = os.getenv("DISCORD_CHANNEL_ID")
 
 # Discordのボットの設定
 intents = discord.Intents.default()
@@ -25,16 +27,8 @@ client = OpenAI(api_key=openai_api_key)
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-    channel = bot.get_channel(channnel_id)
+    channel = bot.get_channel(discord_channel_id)
     await channel.send("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
-
-
-# @bot.event
-# async def on_massage(message: discord.Message):
-#     if message.author.bot:
-#         return
-#     if message.content == 'hello':
-#         await message.reply("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
 
 
 @bot.command()
@@ -55,8 +49,8 @@ async def ask(ctx, *, question):
     else:
         # 改善された回答を取得
         GPTs_answer = throw_QandA_to_GPT(question, results)
-        contents = GPTs_answer.choices[0].message.content
-        reply_msg = f"質問: {question}\n\n回答: {contents}\n\n参考URL: {url}"
+        GPTs_contents = GPTs_answer.choices[0].message.content
+        reply_msg = f"質問: {question}\n\n回答: {GPTs_contents}\n\n参考URL: {url}"
 
     # ユーザーに回答を送信
     await ctx.send(reply_msg)
@@ -67,6 +61,16 @@ bot.run(discord_bot_token)
 
 
 def compare_similarity_with_threshold(first_answer: list, threshold=0.85):
+    """閾値と類似度を比べて大きい時に True を返す関数
+
+    Args:
+        first_answer (list): 類似度が一番高い回答セット
+        threshold (float, optional): デフォルトは0.85
+
+    Returns:
+        bool: 類似度の方が大きい時に True
+    """
+
     # 最も高い類似度を比較する
     first_sim = first_answer[2]
 
