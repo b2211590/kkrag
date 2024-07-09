@@ -15,11 +15,17 @@ openai_api_key: str = os.getenv("OPENAI_API_KEY")
 
 def build_chain(question: str, results: list):
 
-    # 変数をアンパック
-    first_answer, second_answer, third_answer = results
-    fa_ans, fa_url, fa_sim = first_answer
-    sa_ans, sa_url, sa_sim = second_answer
-    ta_ans, ta_url, ta_sim = third_answer
+    first_reference, second_reference, third_reference = results
+
+    inputs = {
+        'question': question,
+        'ref1': first_reference[0],
+        'sim1': first_reference[2],
+        'ref2': second_reference[0],
+        'sim2': second_reference[2],
+        'ref3': third_reference[0],
+        'sim3': third_reference[2]
+    }
 
     system_message_prompt = SystemMessagePromptTemplate(
         prompt=PromptTemplate(
@@ -29,9 +35,9 @@ def build_chain(question: str, results: list):
 
     human_message_prompt = HumanMessagePromptTemplate(
         prompt=PromptTemplate(
-            input_variables=["question", 'answer1', 'similarity1',
-                             'answer2', 'similarity2', 'answer3', 'similarity3'],
-            template="質問: {question}\n\n参考情報1: {answer1}\n\n参考情報1の正確性: {similarity1}\n\n参考情報2: {answer2}\n\n参考情報2の正確性: {similarity2}\n\n参考情報3: {answer3}\n\n参考情報3の正確性: {similarity3}\n\n改善された回答:"
+            input_variables=["question", 'ref1', 'sim1',
+                             'ref2', 'sim2', 'ref3', 'sim3'],
+            template="質問: {question}\n\n参考情報1: {ref1}\n\n参考情報1の正確性: {sim1}\n\n参考情報2: {ref2}\n\n参考情報2の正確性: {sim2}\n\n参考情報3: {ref3}\n\n参考情報3の正確性: {sim3}\n\n改善された回答:"
         )
     )
 
@@ -43,7 +49,7 @@ def build_chain(question: str, results: list):
         prompt=chat_prompt_template
     )
 
-    response = chain(question, fa_ans, fa_sim, sa_ans, sa_sim, ta_ans, ta_sim)
+    response = chain(inputs)
 
     return response
 

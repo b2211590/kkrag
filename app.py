@@ -1,10 +1,9 @@
 import discord
 from discord import app_commands
-from kendra import Kendra
-from gpt_chain import build_chain
 import os
 from dotenv import load_dotenv
-
+from kendra import Kendra
+from gpt_chain import build_chain
 
 # 各シークレットを環境変数から読み込む
 load_dotenv()
@@ -20,6 +19,30 @@ tree = app_commands.CommandTree(client)
 
 # Kendraクラスのインスタンスを作成
 kendra = Kendra(datasource_path)
+
+
+def compare_similarity_with_threshold(results: list, threshold=0.85) -> bool:
+    """閾値と類似度を比べて大きい時に True を返す関数
+
+    Args:
+        first_answer (list): 類似度が一番高い回答セット
+        threshold (float, optional): デフォルトは0.85
+
+    Returns:
+        bool: 類似度の方が大きい時に True
+    """
+
+    is_greater: bool = False
+
+    first_answer: list = results[0]
+
+    # 最も高い類似度を比較する
+    first_sim = first_answer[2]
+
+    if first_sim > threshold:
+        is_greater = True
+
+    return is_greater
 
 
 @client.event
@@ -39,12 +62,15 @@ async def on_message(message):
     if message.author == client.user:
         return
 
+    print(f'We got message: {message.content}')
+
     if message.content.startswith('こんにちは'):
-        await message.channel.send('こんにちは！ぼくは kkrag. \nH206に関する質問を回答するよ。なんでも質問してね！')
+        await message.channel.send('こんにちは! ぼくは kkrag! \nH206に関する質問を回答するよ。なんでも質問してね!')
 
 
 @tree.command(name='ask', description='質問内容を入力してくれると答えるよ')
 async def ask(interaction: discord.Interaction, question: str):
+    print(f'the \'ask\' is called.')
     reply_msg = "this is read only in debugging."
 
     # Kendraを使って最も類似した質問の回答と参考URLを取得
@@ -69,28 +95,6 @@ async def ask(interaction: discord.Interaction, question: str):
 
 
 client.run(discord_bot_token)
-
-
-def compare_similarity_with_threshold(results: list, threshold=0.85):
-    """閾値と類似度を比べて大きい時に True を返す関数
-
-    Args:
-        first_answer (list): 類似度が一番高い回答セット
-        threshold (float, optional): デフォルトは0.85
-
-    Returns:
-        bool: 類似度の方が大きい時に True
-    """
-
-    first_answer: list = results[0]
-
-    # 最も高い類似度を比較する
-    first_sim = first_answer[2]
-
-    if first_sim > threshold:
-        return True
-
-    return False
 
 
 # def throw_QandA_to_GPT(question: str, results: list):
