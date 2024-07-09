@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 from openai import OpenAI
 from kendra import Kendra
@@ -37,7 +38,7 @@ async def ask(ctx, *, question):
     results = kendra.find_best_matches(question)
     print(f'\n事前回答: {results}')
 
-    similarity_is_greater = compare_similarity_with_threshold(results)
+    similarity_is_greater: bool = await compare_similarity_with_threshold(results)
 
     if similarity_is_greater is False:
         reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
