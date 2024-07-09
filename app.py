@@ -38,7 +38,7 @@ def compare_similarity_with_threshold(results: list, threshold=0.85) -> bool:
 
     # 最も高い類似度を比較する
     first_sim = first_answer[2]
-    print(f'The first similarity is <{first_sim}> .')
+    print(f'\nThe first similarity is <{first_sim}> .')
 
     if first_sim > threshold:
         is_greater = True
@@ -48,7 +48,7 @@ def compare_similarity_with_threshold(results: list, threshold=0.85) -> bool:
 
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'\nWe have logged in as {client.user}')
 
     # アクティビティを設定
     new_activity = f"チャットボット"
@@ -63,7 +63,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    print(f'We got message: {message.content}')
+    print(f'\nWe got message: {message.content}')
 
     if message.content.startswith('こんにちは'):
         await message.channel.send('こんにちは! ぼくは kkrag! \nH206に関する質問を回答するよ。なんでも質問してね!')
@@ -71,9 +71,9 @@ async def on_message(message):
 
 @tree.command(name='ask', description='質問内容を入力してくれると答えるよ')
 async def ask(interaction: discord.Interaction, question: str):
-    print(f'the \'ask\' is called.')
+    print(f'\nthe ask: {question} is called.')
     try:
-        reply_msg = "質問を処理中です。お待ちください..."
+        reply_msg = f'{question}について考え中...'
 
         # ユーザーに回答を送信
         # await interaction.response.send_message(reply_msg)
@@ -92,13 +92,14 @@ async def ask(interaction: discord.Interaction, question: str):
         else:
             # 改善された回答を取得
             GPTs_answer = build_chain(question, results)
+            print('\n')
             print(GPTs_answer)
-            print(type(GPTs_answer))
+            # print(type(GPTs_answer))
 
-        if GPTs_answer:
-            reply_msg = f"質問: {question}\n\n回答: {GPTs_answer[text]}\n\n参考URL: {results[0][1]}"
-        else:
-            reply_msg = "ChatGPTSunechattaError: うまくchainできなかったようです"
+            if GPTs_answer:
+                reply_msg = f"質問: {question}\n\n回答: {GPTs_answer['text']}\n\n参考URL: {results[0][1]}"
+            else:
+                reply_msg = "ChatGPTSunechattaError: うまくchainできなかったようです"
 
         # 最終応答を送信
         await interaction.followup.send(content=reply_msg)
@@ -107,4 +108,17 @@ async def ask(interaction: discord.Interaction, question: str):
         await interaction.followup.send(content=f"An error occurred: {str(e)}")
 
 
-client.run(discord_bot_token)
+@client.event
+async def on_disconnect():
+    print("We disconnected, trying to reconnect...")
+
+
+@client.event
+async def on_resumed():
+    print("We successfully reconnected.")
+
+try:
+    client.run(discord_bot_token)
+except discord.errors.ConnectionClosed:
+    print("Connection closed, restarting bot...")
+    client.run(discord_bot_token)
