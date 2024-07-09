@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from openai import OpenAI
 from kendra import Kendra
 from gpt_chain import build_chain
 import os
@@ -16,46 +15,63 @@ discord_channel_id = int(os.getenv("DISCORD_CHANNEL_ID"))
 
 # Discordのボットの設定
 intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 
 # Kendraクラスのインスタンスを作成
 kendra = Kendra(datasource_path)
 
 
-@bot.event
+# @bot.event
+# async def on_ready():
+#     print(f'We have logged in as {bot.user}')
+#     channel = bot.get_channel(discord_channel_id)
+#     await channel.send("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
+
+
+@client.event
 async def on_ready():
-    print(f'We have logged in as {bot.user}')
-    channel = bot.get_channel(discord_channel_id)
-    await channel.send("こんにちは。ぼくは kkrag です！なんでも聞いてね！")
+    print(f'We have logged in as {client.user}')
+
+    # アクティビティを設定
+    new_activity = f"on going"
+    await client.change_presence(activity=discord.Game(new_activity))
+
+    # スラッシュコマンドを同期
+    await tree.sync()
 
 
-@bot.command()
-async def ask(ctx, *, question):
-    reply_msg = "これは表示されません"
-
-    # Kendraを使って最も類似した質問の回答と参考URLを取得
-    results = kendra.find_best_matches(question)
-    print(f'\n事前回答: {results}')
-
-    similarity_is_greater: bool = await compare_similarity_with_threshold(results)
-
-    if similarity_is_greater is False:
-        reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
-
-    else:
-        # 改善された回答を取得
-        # GPTs_answer = throw_QandA_to_GPT(question, results)
-        GPTs_answer = build_chain(question, results)
-        print(GPTs_answer)
-        # GPTs_contents = GPTs_answer.choices[0].message.content
-        # reply_msg = f"質問: {question}\n\n回答: {GPTs_contents}\n\n参考URL: {url}"
-
-    # ユーザーに回答を送信
-    await ctx.send(reply_msg)
+@tree.command(name='ask', description='質問内容を入力しろ')
+async def ask(interaction: discord.Interaction, question: str):
+    await interaction.response.send_message(f'{question} と入力したね！')
 
 
-bot.run(discord_bot_token)
+# @bot.command()
+# async def ask(ctx, *, question):
+#     reply_msg = "これは表示されません"
+
+#     # Kendraを使って最も類似した質問の回答と参考URLを取得
+#     results = kendra.find_best_matches(question)
+#     print(f'\n事前回答: {results}')
+
+#     similarity_is_greater: bool = await compare_similarity_with_threshold(results)
+
+#     if similarity_is_greater is False:
+#         reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
+
+#     else:
+#         # 改善された回答を取得
+#         # GPTs_answer = throw_QandA_to_GPT(question, results)
+#         GPTs_answer = build_chain(question, results)
+#         print(GPTs_answer)
+#         # GPTs_contents = GPTs_answer.choices[0].message.content
+#         # reply_msg = f"質問: {question}\n\n回答: {GPTs_contents}\n\n参考URL: {url}"
+
+#     # ユーザーに回答を送信
+#     await ctx.send(reply_msg)
+
+
+client.run(discord_bot_token)
 
 
 def compare_similarity_with_threshold(results: list, threshold=0.85):
