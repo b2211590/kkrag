@@ -13,7 +13,7 @@ load_dotenv()
 openai_api_key: str = os.getenv("OPENAI_API_KEY")
 
 
-def build_chain(question: str, results: list):
+def build_chain(question: str, results: list) -> dict:
 
     first_reference, second_reference, third_reference = results
 
@@ -52,5 +52,3 @@ def build_chain(question: str, results: list):
     response = chain(inputs)
 
     return response
-
-# print(chain("データサイエンティスト"))

@@ -38,6 +38,7 @@ def compare_similarity_with_threshold(results: list, threshold=0.85) -> bool:
 
     # 最も高い類似度を比較する
     first_sim = first_answer[2]
+    print(f'The first similarity is <{first_sim}> .')
 
     if first_sim > threshold:
         is_greater = True
@@ -71,51 +72,39 @@ async def on_message(message):
 @tree.command(name='ask', description='質問内容を入力してくれると答えるよ')
 async def ask(interaction: discord.Interaction, question: str):
     print(f'the \'ask\' is called.')
-    reply_msg = "this is read only in debugging."
+    try:
+        reply_msg = "質問を処理中です。お待ちください..."
 
-    # Kendraを使って最も類似した質問の回答と参考URLを取得
-    results = kendra.find_best_matches(question)
-    print(f'\n事前回答: {results}')
+        # ユーザーに回答を送信
+        # await interaction.response.send_message(reply_msg)
+        await interaction.response.defer()
 
-    similarity_is_greater: bool = compare_similarity_with_threshold(results)
+        # Kendraを使って最も類似した質問の回答と参考URLを取得
+        results = kendra.find_best_matches(question)
+        print(f'\n事前回答: {results}')
 
-    if similarity_is_greater is False:
-        reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
+        similarity_is_greater: bool = compare_similarity_with_threshold(
+            results)
 
-    else:
-        # 改善された回答を取得
-        # GPTs_answer = throw_QandA_to_GPT(question, results)
-        GPTs_answer = build_chain(question, results)
-        print(GPTs_answer)
-        # GPTs_contents = GPTs_answer.choices[0].message.content
-        # reply_msg = f"質問: {question}\n\n回答: {GPTs_contents}\n\n参考URL: {url}"
+        if similarity_is_greater is False:
+            reply_msg = "すみません。質問の意図が汲み取れませんでした。また質問してください。"
 
-    # ユーザーに回答を送信
-    await interaction.response.send_message(reply_msg)
+        else:
+            # 改善された回答を取得
+            GPTs_answer = build_chain(question, results)
+            print(GPTs_answer)
+            print(type(GPTs_answer))
+
+        if GPTs_answer:
+            reply_msg = f"質問: {question}\n\n回答: {GPTs_answer[text]}\n\n参考URL: {results[0][1]}"
+        else:
+            reply_msg = "ChatGPTSunechattaError: うまくchainできなかったようです"
+
+        # 最終応答を送信
+        await interaction.followup.send(content=reply_msg)
+
+    except Exception as e:
+        await interaction.followup.send(content=f"An error occurred: {str(e)}")
 
 
 client.run(discord_bot_token)
-
-
-# def throw_QandA_to_GPT(question: str, results: list):
-#
-#     # OpenAIを使って回答を改善
-#     chat_completion = client.chat.completions.create(
-#         messages=[
-#             {
-#                 "role": "system",
-#                 "content": "あなたは質問に対する回答を提供するAIです。つぎに伝える事前回答が存在すれば、その内容忠実に回答してください。もしわからなければ、その旨を伝えてください。",
-#             },
-#             {
-#                 "role": "user",
-#                 "content": f"質問: {question}\n\n事前回答: {answer}\n\n参考URL: {url}\n\n事前回答の正確性: {similarity}\n\n改善された回答:",
-#             }
-#         ],
-#         model="gpt-3.5-turbo",
-#         max_tokens=150
-#     )
-#
-#     print(f'ChatGPTレスポンス: {chat_completion}')
-#
-#     # 改善された回答を取得
-#     return chat_completion
