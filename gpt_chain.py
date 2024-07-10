@@ -29,7 +29,7 @@ def build_chain(question: str, results: list) -> dict:
 
     system_message_prompt = SystemMessagePromptTemplate(
         prompt=PromptTemplate(
-            template="あなたは質問に対する回答を提供するAIです。つぎに伝える参考情報が存在すればその内容を正確性をもとに総合的に判断して、改善された回答として忠実に回答してください。"
+            template="###命令書###\nあなたはH206という研究室の質問に対する回答を提供するAIです。制約条件に従って回答を作成してください。\n\n###制約条件###\n事前に用意したFAQのなかから質問に近いものの情報を参考情報として渡すので、その参考情報の正確度を考慮すること\n正確度が低い参考情報は回答に含めないこと\n必ず参考情報をもとに回答すること\n改善された回答: の続きを作成すること\n\n###対象###\nH206の研究室に所属する学生"
         )
     )
 
@@ -37,7 +37,7 @@ def build_chain(question: str, results: list) -> dict:
         prompt=PromptTemplate(
             input_variables=["question", 'ref1', 'sim1',
                              'ref2', 'sim2', 'ref3', 'sim3'],
-            template="質問: {question}\n\n参考情報1: {ref1}\n\n参考情報1の正確性: {sim1}\n\n参考情報2: {ref2}\n\n参考情報2の正確性: {sim2}\n\n参考情報3: {ref3}\n\n参考情報3の正確性: {sim3}\n\n改善された回答:"
+            template="質問: {question}\n\n参考情報1: {ref1}\n\n参考情報1の正確度: {sim1}\n\n参考情報2: {ref2}\n\n参考情報2の正確度: {sim2}\n\n参考情報3: {ref3}\n\n参考情報3の正確度: {sim3}\n\n改善された回答:"
         )
     )
 
