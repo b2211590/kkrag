@@ -76,7 +76,6 @@ async def ask(interaction: discord.Interaction, question: str):
         reply_msg = f'{question}について考え中...'
 
         # ユーザーに回答を送信
-        # await interaction.response.send_message(reply_msg)
         await interaction.response.defer()
 
         # Kendraを使って最も類似した質問の回答と参考URLを取得
@@ -94,7 +93,6 @@ async def ask(interaction: discord.Interaction, question: str):
             GPTs_answer = build_chain(question, results)
             print('\n')
             print(GPTs_answer)
-            # print(type(GPTs_answer))
 
             if GPTs_answer:
                 reply_msg = f"質問: {question}\n\n回答: {GPTs_answer['text']}\n\n参考URL: {results[0][1]}"
