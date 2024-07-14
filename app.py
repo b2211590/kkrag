@@ -51,7 +51,7 @@ async def on_ready():
     print(f'\nWe have logged in as {client.user}')
 
     # アクティビティを設定
-    new_activity = f"チャットボット"
+    new_activity = f"/ask で質問してね"
     await client.change_presence(activity=discord.Game(new_activity))
 
     # スラッシュコマンドを同期
